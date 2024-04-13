@@ -1,6 +1,8 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import os
+import json
+import pymongo
 import requests
 import pdfplumber
 from docx import Document
@@ -17,6 +19,12 @@ CORS(app)  # Enable CORS for all routes
 nltk.download('punkt')
 nltk.download('stopwords')
 nltk.download('wordnet')
+
+# Configure MongoDB connection
+client = pymongo.MongoClient("mongodb+srv://sharmachirag393:JlOSu0BFSiJ7FnRF@devopia.qwmpayp.mongodb.net/?retryWrites=true&w=majority&appName=Devopia")
+db = client["test"]
+user_collection = db["users"]
+quiz_collection = db["quiz"]
 
 UPLOAD_FOLDER = 'uploads/'
 ALLOWED_EXTENSIONS = {'.pdf', '.docx', '.txt', '.pptx', '.doc', '.ppt'}
@@ -145,6 +153,7 @@ def extract_text(file_path):
 @app.route('/files/upload', methods=['POST'])
 def upload_file():
     file = request.files.get('files')
+    email = request.form.get('email')
     if not file or not allowed_file(file.filename):
         return jsonify({'error': 'Unsupported file type or no file uploaded'}), 400
     
@@ -166,11 +175,34 @@ def upload_file():
         # Send text content to another API
         payload = {'text': cleaned_text}
         response = requests.post(TARGET_API_URL, json=payload)
+        api_response = response.json()
+        mcq_data = json.loads(api_response['mcq'].replace('\\n', '\n'))
+        # Check if the response is successful
+        if response.status_code == 200:
+            # Fetch the user's grade and board from the User collection
+            user = user_collection.find_one({'email': email})
+            if not user:
+                return jsonify({'error': 'User not found'}), 404
+
+            grade = user['current_class']
+            board = user['board']
+
+            # Create a new Quiz document
+            new_quiz = {
+                'email': email,
+                'topic_name': api_response['title'],
+                'grade': grade,
+                'board': board,
+                'questions': [item['question'] for item in mcq_data],
+                'options': [[option for option in item['answerOptions']] for item in mcq_data],
+                'correct_answer': [item['correctAnswer'] for item in mcq_data]
+            }
+            quiz_collection.insert_one(new_quiz)
 
         # Remove the uploaded file
         os.remove(file_path)
         
-        return jsonify({'api_response': response.json()}), 200
+        return jsonify({'email': email, 'api_response': response.json()}), 200
     
     except Exception as error:
         print(error)
