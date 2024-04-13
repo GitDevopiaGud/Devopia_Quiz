@@ -179,14 +179,12 @@ def upload_file():
         payload = {'text': cleaned_text}
         response = requests.post(TARGET_API_URL, json=payload)
         
-        # Check if the response is successful
-        if response.status_code == 200:
-            api_response = response.json()
-            mcq_data = json.loads(api_response['mcq'].replace('\\n', '\n'))
-            title = api_response['title']
-            questions = [item['question'] for item in mcq_data]
-            options = [[option for option in item['options']] for item in mcq_data]
-            correct_answer = [item['correctAnswer'] for item in mcq_data]
+        api_response = response.json()
+        mcq_data = json.loads(api_response['mcq'].replace('\\n', '\n'))
+        title = api_response['title']
+        questions = [item['question'] for item in mcq_data]
+        options = [[option for option in item['options']] for item in mcq_data]
+        correct_answer = [item['correctAnswer'] for item in mcq_data]
         
         # Remove the uploaded file
         os.remove(file_path)
