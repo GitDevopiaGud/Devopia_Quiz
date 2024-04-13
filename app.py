@@ -178,38 +178,69 @@ def upload_file():
         # Send text content to another API
         payload = {'text': cleaned_text}
         response = requests.post(TARGET_API_URL, json=payload)
-        api_response = response.json()
-        mcq_data = json.loads(api_response['mcq'].replace('\\n', '\n'))
+        
         # Check if the response is successful
         if response.status_code == 200:
-            # Fetch the user's grade and board from the User collection
-            user = user_collection.find_one({'email': email})
-            if not user:
-                return jsonify({'error': 'User not found'}), 404
-
-            grade = user['current_class']
-            board = user['board']
-            # Create a new Quiz document
-            new_quiz = {
-                'email': email,
-                'topic_name': api_response['title'],
-                'grade': grade,
-                'board': board,
-                'questions': [item['question'] for item in mcq_data],
-                'options': [[option for option in item['options']] for item in mcq_data],
-                'correct_answer': [item['correctAnswer'] for item in mcq_data]
-            }
-            quiz_collection.insert_one(new_quiz)
-
+            api_response = response.json()
+            mcq_data = json.loads(api_response['mcq'].replace('\\n', '\n'))
+            title = api_response['title']
+            questions = [item['question'] for item in mcq_data]
+            options = [[option for option in item['options']] for item in mcq_data]
+            correct_answer = [item['correctAnswer'] for item in mcq_data]
+        
         # Remove the uploaded file
         os.remove(file_path)
         
-        return jsonify({'email': email, 'api_response': response.json()}), 200
+        return jsonify({'email': email, 'title': title, 'questions': questions, 'options': options, 'correct_answer': correct_answer}), 200
     
     except Exception as error:
         print(error)
         # Return a JSON response indicating an error
         return jsonify({'error': 'An error occurred during file processing'}), 500
     
+@app.route('/files/database', methods=['POST'])
+def upload_to_database():
+    # Get JSON data from the request body
+    data = request.get_json()
+    
+    if not data:
+        return jsonify({'error': 'Invalid or missing JSON data'}), 400
+    
+    # Retrieve individual fields from the JSON data
+    email = data.get('email')
+    title = data.get('title')
+    questions = data.get('questions')
+    options = data.get('options')
+    correct_answer = data.get('correct_answer')
+    
+    # Validate required fields
+    if not all([email, title, questions, options, correct_answer]):
+        return jsonify({'error': 'Missing required fields'}), 400
+    
+    # Fetch the user from the User collection using email
+    user = user_collection.find_one({'email': email})
+    
+    if not user:
+        return jsonify({'error': 'User not found'}), 404
+    
+    grade = user.get('current_class')
+    board = user.get('board')
+    
+    # Create a new Quiz document
+    new_quiz = {
+        'email': email,
+        'topic_name': title,
+        'grade': grade,
+        'board': board,
+        'questions': questions,
+        'options': options,
+        'correct_answer': correct_answer
+    }
+    
+    # Insert the new quiz document into the quiz_collection
+    quiz_collection.insert_one(new_quiz)
+    
+    return jsonify({'message': 'Quiz data saved successfully'}), 200
+
 if __name__ == '__main__':
     app.run(debug=True)
