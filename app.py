@@ -150,6 +150,10 @@ def extract_text(file_path):
     else:
         raise ValueError("Unsupported file format")
 
+@app.route('/')
+def home():
+    return 'Welcome to the File Upload API'
+
 @app.route('/files/upload', methods=['POST'])
 def upload_file():
     file = request.files.get('files')
@@ -171,7 +175,6 @@ def upload_file():
 
         # Clean the text content
         cleaned_text = clean_text(file_text)
-        
         # Send text content to another API
         payload = {'text': cleaned_text}
         response = requests.post(TARGET_API_URL, json=payload)
@@ -186,7 +189,6 @@ def upload_file():
 
             grade = user['current_class']
             board = user['board']
-
             # Create a new Quiz document
             new_quiz = {
                 'email': email,
@@ -194,7 +196,7 @@ def upload_file():
                 'grade': grade,
                 'board': board,
                 'questions': [item['question'] for item in mcq_data],
-                'options': [[option for option in item['answerOptions']] for item in mcq_data],
+                'options': [[option for option in item['options']] for item in mcq_data],
                 'correct_answer': [item['correctAnswer'] for item in mcq_data]
             }
             quiz_collection.insert_one(new_quiz)
