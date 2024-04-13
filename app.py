@@ -25,6 +25,7 @@ client = pymongo.MongoClient("mongodb+srv://sharmachirag393:JlOSu0BFSiJ7FnRF@dev
 db = client["test"]
 user_collection = db["users"]
 quiz_collection = db["quiz"]
+userschema_collection = db["userschema"]
 
 UPLOAD_FOLDER = 'uploads/'
 ALLOWED_EXTENSIONS = {'.pdf', '.docx', '.txt', '.pptx', '.doc', '.ppt'}
@@ -239,6 +240,45 @@ def upload_to_database():
     quiz_collection.insert_one(new_quiz)
     
     return jsonify({'message': 'Quiz data saved successfully'}), 200
+
+@app.route('/files/userschema', methods=['POST'])
+def upload_to_user():
+    # Get JSON data from the request body
+    data = request.get_json()
+    
+    if not data:
+        return jsonify({'error': 'Invalid or missing JSON data'}), 400
+    
+    # Retrieve individual fields from the JSON data
+    email = data.get('email')
+    quiz_id = data.get('quiz_id')
+    options = data.get('options')
+    correct_answer = data.get('correct_answer')
+    
+    # Validate required fields
+    if not all([email, quiz_id, options, correct_answer]):
+        return jsonify({'error': 'Missing required fields'}), 400
+    
+    # Fetch the user from the User collection using email
+    user = user_collection.find_one({'email': email})
+    
+    if not user:
+        return jsonify({'error': 'User not found'}), 404
+    
+    unique = user.get('_id')
+    
+    # Create a new Quiz document
+    new_quiz = {
+        'email_id': unique,
+        'quiz_id': quiz_id,
+        'options': options,
+        'correct_answer': correct_answer
+    }
+    
+    # Insert the new quiz document into the userschema_collection
+    userschema_collection.insert_one(new_quiz)
+    
+    return jsonify({'message': 'User data saved successfully'}), 200
 
 if __name__ == '__main__':
     app.run(debug=True)
