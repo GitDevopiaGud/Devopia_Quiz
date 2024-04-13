@@ -237,9 +237,10 @@ def upload_to_database():
     }
     
     # Insert the new quiz document into the quiz_collection
-    quiz_collection.insert_one(new_quiz)
+    result = quiz_collection.insert_one(new_quiz)
+    inserted_id = result.inserted_id
     
-    return jsonify({'message': 'Quiz data saved successfully'}), 200
+    return jsonify({'message': 'Quiz data saved successfully','_id':str(inserted_id)}), 200
 
 @app.route('/files/userschema', methods=['POST'])
 def upload_to_user():
@@ -252,7 +253,6 @@ def upload_to_user():
     # Retrieve individual fields from the JSON data
     email = data.get('email')
     quiz_id = data.get('quiz_id')
-    options = data.get('options')
     correct_answer = data.get('correct_answer')
     
     # Validate required fields
@@ -272,7 +272,7 @@ def upload_to_user():
         'email_id': unique,
         'quiz_id': quiz_id,
         'options': options,
-        'correct_answer': correct_answer
+        'correct_answer': correct_answer,
     }
     
     # Insert the new quiz document into the userschema_collection
