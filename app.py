@@ -293,8 +293,8 @@ def get_all_quiz():
 @app.route('/api/quizzes', methods=['POST'])
 def get_quizzes():
     data = request.json
-    topic_name = data.get('topic_name')
-    grade = data.get('grade')
+    topic_name = data.get('topic')
+    grade = data.get('class')
     print(topic_name, grade)
 
     if topic_name is None or grade is None:
