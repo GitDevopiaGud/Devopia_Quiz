@@ -6,4 +6,5 @@ python-pptx
 nltk
 requests
 pymongo
+fuzzywuzzy
 gunicorn
