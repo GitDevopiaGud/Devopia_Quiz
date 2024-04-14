@@ -9,6 +9,7 @@ from fuzzywuzzy import fuzz
 from docx import Document
 from pptx import Presentation
 import re
+import datetime
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 from nltk.stem import WordNetLemmatizer
@@ -255,6 +256,8 @@ def upload_to_user():
     email = data.get('email')
     quiz_id = data.get('quiz_id')
     correct_answer = data.get('correct_answer')
+    score = data.get('score')
+    todayday = datetime.datetime.now()
     
     # Validate required fields
     if not all([email, quiz_id, correct_answer]):
@@ -273,6 +276,8 @@ def upload_to_user():
         'email_id': unique,
         'quiz_id': quiz_id,
         'correct_answer': correct_answer,
+        'score': score,
+        'date': todayday,
     }
     
     # Insert the new quiz document into the userschema_collection
