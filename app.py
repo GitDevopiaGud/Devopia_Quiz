@@ -256,7 +256,7 @@ def upload_to_user():
     correct_answer = data.get('correct_answer')
     
     # Validate required fields
-    if not all([email, quiz_id, options, correct_answer]):
+    if not all([email, quiz_id, correct_answer]):
         return jsonify({'error': 'Missing required fields'}), 400
     
     # Fetch the user from the User collection using email
@@ -271,7 +271,6 @@ def upload_to_user():
     new_quiz = {
         'email_id': unique,
         'quiz_id': quiz_id,
-        'options': options,
         'correct_answer': correct_answer,
     }
     
