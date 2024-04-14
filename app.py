@@ -9,6 +9,7 @@ from fuzzywuzzy import fuzz
 from docx import Document
 from pptx import Presentation
 import re
+from bson.objectid import ObjectId
 import datetime
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
@@ -269,11 +270,11 @@ def upload_to_user():
     if not user:
         return jsonify({'error': 'User not found'}), 404
     
-    unique = user.get('_id')
+    # unique = user.get('_id')
     
     # Create a new Quiz document
     new_quiz = {
-        'email_id': unique,
+        'email_id': email,
         'quiz_id': quiz_id,
         'correct_answer': correct_answer,
         'score': score,
@@ -285,20 +286,34 @@ def upload_to_user():
     
     return jsonify({'message': 'User data saved successfully'}), 200
 
+
 @app.route('/alluser', methods=['POST'])
 def get_all_user():
     data = request.json
     email = data.get('email')
     user = user_collection.find_one({'email': email})
-    if user:
-        user_id = str(user['_id'])
-        if user_id:
-            user_data = list(userschema_collection.find({'email_id': user_id}))
-            return jsonify(user_data), 200
-    else:
-        return jsonify({'error': 'User not found'}), 404
-all_quiz = ''
 
+    if user:
+        unique = user.get('_id')
+        user_data = list(userschema_collection.find({'email_id': unique}))
+        if user_data:
+            dates = []
+            scores = []
+
+            for item in user_data:
+                dates.append(item['date'])
+                scores.append(item['score'])
+
+            return jsonify({
+                'date': dates,
+                'score': scores
+            }), 200
+        else:
+            return jsonify({'error': 'No data found for the user'}), 404
+    else:
+        return jsonify({'error': 'User not found'}), 404    
+     
+all_quiz = ''
 @app.route('/getallquiz', methods=['GET'])
 def get_all_quiz():
     global all_quiz
