@@ -5,6 +5,7 @@ import json
 import pymongo
 import requests
 import pdfplumber
+from fuzzywuzzy import fuzz
 from docx import Document
 from pptx import Presentation
 import re
@@ -278,6 +279,37 @@ def upload_to_user():
     userschema_collection.insert_one(new_quiz)
     
     return jsonify({'message': 'User data saved successfully'}), 200
+
+all_quiz = ''
+
+@app.route('/getallquiz', methods=['GET'])
+def get_all_quiz():
+    global all_quiz
+    all_quiz = list(quiz_collection.find({}))
+    for quiz in all_quiz:
+        quiz['_id'] = str(quiz['_id'])
+    return jsonify(all_quiz), 200
+
+@app.route('/api/quizzes', methods=['POST'])
+def get_quizzes():
+    data = request.json
+    topic_name = data.get('topic_name')
+    grade = data.get('grade')
+    print(topic_name, grade)
+
+    if topic_name is None or grade is None:
+        # If either topic_name or grade is not provided, return all quizzes
+        all_quizzes = list(quiz_collection.find({}))
+        for quiz in all_quizzes:
+            quiz['_id'] = str(quiz['_id'])
+        return jsonify({"quizzes": all_quizzes})
+    else:
+        # Filter quizzes based on topic_name and grade
+        similar_quizzes = list(quiz_collection.find({"topic_name": {"$regex": topic_name, "$options": "i"}, "grade": int(grade)}))
+        for quiz in similar_quizzes:
+            quiz['_id'] = str(quiz['_id'])
+        return jsonify({"quizzes": similar_quizzes})
+
 
 if __name__ == '__main__':
     app.run(debug=True)
