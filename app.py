@@ -337,7 +337,7 @@ def get_quizzes():
         return jsonify({"quizzes": all_quizzes})
     else:
         # Filter quizzes based on topic_name and grade
-        similar_quizzes = list(quiz_collection.find({"topic_name": {"$regex": topic_name, "$options": "i"}, "grade": int(grade)}))
+        similar_quizzes = list(quiz_collection.find({"topic_name": {"$regex": topic_name, "$options": "i"}, "grade": grade}))
         for quiz in similar_quizzes:
             quiz['_id'] = str(quiz['_id'])
         return jsonify({"quizzes": similar_quizzes})
