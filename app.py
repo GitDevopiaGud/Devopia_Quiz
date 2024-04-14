@@ -285,6 +285,18 @@ def upload_to_user():
     
     return jsonify({'message': 'User data saved successfully'}), 200
 
+@app.route('/alluser', methods=['POST'])
+def get_all_user():
+    data = request.json
+    email = data.get('email')
+    user = user_collection.find_one({'email': email})
+    if user:
+        user_id = str(user['_id'])
+        if user_id:
+            user_data = list(userschema_collection.find({'email_id': user_id}))
+            return jsonify(user_data), 200
+    else:
+        return jsonify({'error': 'User not found'}), 404
 all_quiz = ''
 
 @app.route('/getallquiz', methods=['GET'])
