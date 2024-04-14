@@ -332,7 +332,7 @@ def get_quizzes():
     if topic_name is None or grade is None:
         # If either topic_name or grade is not provided, return all quizzes
         all_quizzes = list(quiz_collection.find({}))
-        for quiz in all_quizzes:
+        for quiz in all_quizzes[2]:
             quiz['_id'] = str(quiz['_id'])
         return jsonify({"quizzes": all_quizzes})
     else:
